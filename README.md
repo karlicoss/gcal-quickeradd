@@ -10,6 +10,8 @@ Long story short: Google broke 'quick add' feature in google calendar after its 
     Location : 
     Edit in browser: https://www.google.com/calendar/event?eid=cjhib2NkaG5mazJzbHU1ZnVkZ3YyaWc0NjQgbDFyM2YzZ2cwamZzajA2bzdzYnFhdTNhbThAZw
 
+![Demo](https://media.giphy.com/media/xThta97FV4kypC8mFW/giphy.gif)
+
 # Installation
 python3 is required
     
