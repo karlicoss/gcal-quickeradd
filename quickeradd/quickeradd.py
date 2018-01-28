@@ -1,7 +1,9 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 import argparse
+import cmd
 import datetime
 import os
+import sys
 from pprint import pprint
 
 from apiclient import discovery # type: ignore
@@ -9,21 +11,20 @@ import httplib2 # type: ignore
 from oauth2client import client, tools # type: ignore
 from oauth2client.file import Storage # type: ignore
 
-from config import CREDENTIALS_PATH, CLIENT_SECRET_FILE
+from config import CREDENTIALS_FILE, CLIENT_SECRET_FILE
 
 def get_credentials():
-    store = Storage(CREDENTIALS_PATH)
+    store = Storage(CREDENTIALS_FILE)
     credentials = store.get()
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(
             CLIENT_SECRET_FILE,
             scope="https://www.googleapis.com/auth/calendar",
-            # redirect_uri='http://example.com/auth_return',
         )
-        flow.user_agent = "QuickAdd"
+        # flow.user_agent = "QuickAdd"
         flags = tools.argparser.parse_args(args=[])
         credentials = tools.run_flow(flow, store, flags)
-        print('Storing credentials to ' + CREDENTIALS_PATH) # TODO logger
+        print('Storing credentials to ' + CREDENTIALS_FILE) # TODO logger
     return credentials
 
 
@@ -81,17 +82,8 @@ def extract_time_str(timish):
     else:
         return str(timish)
 
-def main():
-    # TODO figure out if should be interactive or not
 
-    parser = argparse.ArgumentParser(description="Google Calendar quick add tool")
-    parser.add_argument("--cal", help="Calendar name", type=str, default=None)
-    parser.add_argument("qstring", help="Quick add string", type=str)
-    args = parser.parse_args()
-
-    calname = args.cal
-    qstring = args.qstring
-
+def do(calname, qstring):
     qa = QuickAdd()
     res = qa.quick_add_to(calname, qstring)
 
@@ -119,10 +111,23 @@ Edit in browser: {link}
     location=safe_get(res, 'location'),
     link=safe_get(res, 'htmlLink'),
 ))
-    # TODO advertise on google product forums
-    # TODO display agenda for the day event was added
-    # TODO license
+    # TODO display agenda for the day event was added?
 
+def main():
+    if len(sys.argv) > 1:
+        # TODO figure out if should be interactive or not
+        parser = argparse.ArgumentParser(description="Google Calendar quick add tool")
+        parser.add_argument("--cal", help="Calendar name", type=str, default=None)
+        parser.add_argument("qstring", help="Quick add string", type=str)
+        args = parser.parse_args()
+
+        do(args.cal, args.qstring)
+    else:
+        calname = input('Calendar name [default=Main]: ')
+        if len(calname) == 0:
+            calname = None
+        qstring = input('Quick add string: ')
+        do(calname, qstring)
 
 if __name__ == '__main__':
     main()
