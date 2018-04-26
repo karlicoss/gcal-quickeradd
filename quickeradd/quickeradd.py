@@ -6,7 +6,7 @@ import os
 import sys
 from pprint import pprint
 
-from apiclient import discovery # type: ignore
+from googleapiclient import discovery # type: ignore
 import httplib2 # type: ignore
 from oauth2client import client, tools # type: ignore
 from oauth2client.file import Storage # type: ignore
@@ -37,10 +37,18 @@ class QuickAdd:
         http = credentials.authorize(httplib2.Http())
         self.service = discovery.build('calendar', 'v3', http=http)
 
+    def calendarList(self):
+        # pylint: disable=maybe-no-member
+        return self.service.calendarList()
+
+    def events(self):
+        # pylint: disable=maybe-no-member
+        return self.service.events()
+
     def all_cals(self):
         page_token = None
         while True:
-            calendar_list = self.service.calendarList().list(pageToken=page_token).execute()
+            calendar_list = self.calendarList().list(pageToken=page_token).execute()
             for calendar_list_entry in calendar_list['items']:
                 yield calendar_list_entry
             page_token = calendar_list.get('nextPageToken')
@@ -55,7 +63,7 @@ class QuickAdd:
 
     def quick_add_to(self, cal: str, qstring: str):
         cal_id = 'primary' if cal is None else self.get_cal_id(cal)
-        return self.service.events().quickAdd(
+        return self.events().quickAdd(
             calendarId=cal_id,
             text=qstring,
         ).execute()
@@ -75,7 +83,10 @@ def extract_time_str(timish):
     elif 'dateTime' in timish:
         tzstr = timish.get('timeZone', None)
         tstr = timish['dateTime']
-        res = datetime.datetime.strptime(tstr, "%Y-%m-%dT%H:%M:%SZ").strftime("%d %b %Y %a %H:%M")
+        split = tstr.split('+')
+        if len(split) == 2:
+            tstr = split[0] + '+' + split[1].replace(':', '') # ugh, parcer can't handle ':' in tzinfo
+        res = datetime.datetime.strptime(tstr, "%Y-%m-%dT%H:%M:%S%z").strftime("%d %b %Y %a %H:%M%z")
         if tzstr:
             res += " " + tzstr
         return res

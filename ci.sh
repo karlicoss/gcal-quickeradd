@@ -1,5 +1,10 @@
 #!/bin/bash
-RES=0
-python3.6 -mmypy quickeradd || RES=$?
-python3.6 -mpylint -E quickeradd/*.py || RES=$?
-exit "$RES"
+
+cd "$(this_dir)" || exit
+
+. ~/bash_ci
+
+ci_run python3.6 -mmypy quickeradd
+ci_run python3.6 -mpylint -E quickeradd/*.py
+
+ci_report_errors
